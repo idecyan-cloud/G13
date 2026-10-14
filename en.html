@@ -1,0 +1,527 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>.langsw{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:16px;font-size:.8rem;font-family:var(--mono);color:var(--accent);text-decoration:none;border:1px solid var(--rule);border-radius:999px;padding:3px 12px;background:var(--surface)}.langsw:hover{border-color:var(--accent)}</style></head><body><title>Page Views and Purchases</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~68ch) that steps through the analysis like a lab notebook; charts break slightly wider than the text. */
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#14171c; --ink-2:#4a5160; --ink-3:#7a8191;
+  --rule:#dfe3ea; --grid:#e9ecf1; --accent:#1f5fae; --accent-soft:#e6eef8;
+  --new:#2a78d6; --ret:#eb6834; --neutral:#8a91a0; --warn:#b4570d; --warn-soft:#fbeee2;
+  --display:"Gothic A1","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"IBM Plex Sans","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121418; --surface:#1a1d23; --ink:#eef0f4; --ink-2:#b9bfcb; --ink-3:#8b92a1;
+  --rule:#2c313b; --grid:#252a33; --accent:#7fb0ef; --accent-soft:#1d2a3c;
+  --new:#3987e5; --ret:#d95926; --neutral:#7d8494; --warn:#f0a35c; --warn-soft:#2e2318; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121418; --surface:#1a1d23; --ink:#eef0f4; --ink-2:#b9bfcb; --ink-3:#8b92a1;
+  --rule:#2c313b; --grid:#252a33; --accent:#7fb0ef; --accent-soft:#1d2a3c;
+  --new:#3987e5; --ret:#d95926; --neutral:#7d8494; --warn:#f0a35c; --warn-soft:#2e2318; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.7;padding-inline:16px}
+.wrap{max-width:780px;margin:0 auto;padding-block:40px 80px}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.25;margin:0}
+h1{font-size:clamp(1.9rem,5vw,2.75rem);font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.5rem;font-weight:800}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.lede{font-size:1.125rem;color:var(--ink-2)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header.top{display:grid;gap:16px;padding-bottom:28px;border-bottom:1px solid var(--rule)}
+.answer{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:20px 22px;display:grid;gap:10px}
+.answer strong{color:var(--accent)}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.875rem}
+nav.toc a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--rule)}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-color:var(--accent)}
+a:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section{display:grid;gap:18px;padding-block:44px 8px}
+.step{font-family:var(--mono);font-size:.8rem;color:var(--accent)}
+.figure{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:18px 16px 14px;display:grid;gap:10px;min-width:0}
+.figure .ftitle{font-weight:600;font-size:.95rem}
+.figure .fnote{font-size:.8rem;color:var(--ink-3)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+svg.chart{width:100%;height:auto;display:block;overflow:visible}
+svg.chart text{font-family:var(--mono);font-size:11px;fill:var(--ink-3)}
+svg.chart .lbl{fill:var(--ink-2)}
+svg.chart .strong{fill:var(--ink);font-weight:500}
+.tablewrap{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.875rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:600;color:var(--ink-2);font-size:.8rem}
+td.r,th.r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hl td{background:var(--accent-soft)}
+details{font-size:.875rem}
+summary{cursor:pointer;color:var(--ink-2)}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);padding:12px 16px;border-radius:0 8px 8px 0;font-size:.95rem}
+.callout b{color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--rule);background:var(--surface);color:var(--ink-2)}
+.chip.src-r::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:1px}
+.chip.src-c::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--ink-2);margin-right:6px;vertical-align:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:16px;display:grid;gap:6px;min-width:0}
+.card .k{font-size:.8rem;color:var(--ink-3)}
+.card .v{font-family:var(--mono);font-size:1.6rem;font-variant-numeric:tabular-nums}
+.yes{color:var(--accent);font-weight:600}
+.no{color:var(--warn);font-weight:600}
+ol.steps{margin:0;padding-left:1.3em;display:grid;gap:6px}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--rule);font-size:.8rem;color:var(--ink-3);display:grid;gap:8px}
+footer a{color:var(--ink-2)}
+.bar{transform-box:fill-box;transform-origin:left center}
+.replay{justify-self:start;font:inherit;font-size:.8rem;color:var(--accent);background:var(--accent-soft);border:1px solid var(--rule);border-radius:999px;padding:4px 12px;cursor:pointer}
+.replay:hover{border-color:var(--accent)}
+
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;align-items:start}
+.calc-controls{display:grid;gap:14px;min-width:0}
+.calc-controls label,.calc-controls .lbl{font-size:.8rem;color:var(--ink-2);font-weight:600;display:block;margin-bottom:4px}
+.calc-controls select,.calc-controls input[type=number]{width:100%;font:inherit;font-size:.9rem;padding:7px 9px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink)}
+.pages-row{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:10px;align-items:center}
+.pages-row input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{margin:0!important;text-align:center;padding:8px;cursor:pointer;font-weight:500!important;color:var(--ink-2)!important;font-size:.9rem!important}
+.seg input:checked+label{background:var(--accent);color:var(--bg)!important}
+.seg input:focus-visible+label{outline:2px solid var(--accent);outline-offset:-3px}
+.calc-out{background:var(--accent-soft);border-radius:10px;padding:18px 20px;display:grid;gap:10px;min-width:0}
+.calc-big{font-family:var(--mono);font-size:3rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--accent)}
+.calc-rows{display:grid;gap:6px;font-size:.875rem}
+.calc-rows div{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--rule);padding-top:6px}
+.calc-rows b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.dl-list{display:grid;gap:8px}
+.dl-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--rule);border-radius:8px;background:var(--surface);text-decoration:none;color:var(--ink)}
+.dl-item:hover,.dl-item:focus-visible{border-color:var(--accent)}
+.dl-item b{display:block;font-weight:600}
+.dl-item span{font-size:.8rem;color:var(--ink-3)}
+.dl-item i{font-style:normal;font-family:var(--mono);font-size:.8rem;color:var(--accent);white-space:nowrap}
+code{font-family:var(--mono);font-size:.85em;background:var(--accent-soft);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-family:var(--mono);font-size:12px;line-height:1.5;padding:6px 9px;border-radius:6px;max-width:260px;z-index:10}
+@media (prefers-reduced-motion:no-preference){svg.chart .mark{transition:opacity .15s}}
+</style>
+
+<a class="langsw" href="ko.html">한국어</a>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Group 13 · Week 5 · UCI Online Shoppers data · 12,245 sessions</div>
+    <h1>Do shoppers who view more product pages buy more?</h1>
+    <p class="lede">We used online store session logs to study, step by step, how visitor type and product-page count relate to purchasing.</p>
+    <div class="answer">
+      <div class="eyebrow">Short answer</div>
+      <p><strong>Sessions with more product pages end in a purchase more often.</strong> The positive relationship remains after accounting for season, traffic source and visitor type, and it is not small at low page counts (new visitors, 10 → 20 pages: 17.9% → 23.2%).</p>
+      <p><strong>We cannot call it a cause.</strong> The data do not measure prior purchase intent. Whether a feature that raises page views also raises purchases needs an A/B test.</p>
+    </div>
+    <div class="chips">
+      <span class="chip src-r">Figure from the report</span>
+      <span class="chip src-c">Additional check (recomputed from the same data)</span>
+    </div>
+    <nav class="toc" aria-label="Contents">
+      <a href="#visitor">Visitor type</a><a href="#pages">Page count</a><a href="#season">Season</a><a href="#model">Regression</a><a href="#calc">Calculator</a><a href="#dml">DML</a><a href="#size">Effect size</a><a href="#next">Next step</a>
+    <a href="#resources">Downloads</a></nav>
+  </header>
+
+  <section id="visitor">
+    <div class="step">STEP 1 · Starting question</div>
+    <h2>New visitors bought more often</h2>
+    <p class="prose">New visitors purchased almost twice as often as returning visitors. A chi-square test (χ² = 134.68, p &lt; 0.001) shows the gap is unlikely to be chance. It does not mean that returning makes people buy less; returning visitors may simply include more browsers.</p>
+    <div class="figure">
+      <div class="ftitle">Purchase rate by visitor type <span class="chip src-r" style="margin-left:6px">Report</span></div>
+      <svg class="chart" id="c-visitor" viewBox="0 0 640 170" role="img" aria-label="Bar chart: purchase rate 24.91% for new visitors, 13.93% for returning visitors"></svg>
+      <div class="fnote">Whiskers show 95% Wilson intervals. New: 1,694 sessions; returning: 10,551 sessions.</div>
+    </div>
+  </section>
+
+  <section id="pages">
+    <div class="step">STEP 2 · Extending the question</div>
+    <h2>More product pages, generally more purchases</h2>
+    <p class="prose">Purchase rates rise across page-count bands for both groups. New visitors appear to dip after 41 pages, but those bands hold only 123, 22 and 3 sessions, so the intervals are very wide. The data do not establish a turning point.</p>
+    <div class="figure">
+      <div class="ftitle">Purchase rate by product-page band <span class="chip src-c" style="margin-left:6px">Recomputed</span></div>
+      <div class="legend"><span><i class="sw" style="background:var(--new)"></i>New visitors</span><span><i class="sw" style="background:var(--ret)"></i>Returning visitors</span><span>Faded dot = fewer than 30 sessions</span></div>
+      <svg class="chart" id="c-bands" viewBox="0 0 640 300" role="img" aria-label="Purchase rate by page-count band, rising for both groups"></svg>
+      <div class="fnote">Vertical lines show 95% Wilson intervals. Hover a dot to see its session count.</div>
+      <details><summary>Show as table</summary><div class="tablewrap"><table id="t-bands"></table></div></details>
+    </div>
+  </section>
+
+  <section id="season">
+    <div class="step">STEP 3 · Looking for hidden causes</div>
+    <h2>Season moves page views and purchases together</h2>
+    <p class="prose">In shopping seasons such as November, people both view more pages and buy more. Across months, average page count and purchase rate correlate at 0.87. A variable that affects both the treatment and the outcome is a <b>confounder</b>; without adjusting for it, a seasonal effect would be mistaken for a page-count effect.</p>
+    <div class="figure">
+      <div class="ftitle">Average product pages and purchase rate by month <span class="chip src-c" style="margin-left:6px">Recomputed</span></div>
+      <svg class="chart" id="c-month" viewBox="0 0 640 300" role="img" aria-label="Scatter of monthly average page count and purchase rate; November is highest on both"></svg>
+      <div class="fnote">Each dot is one month; dot size shows session count. January and April are not in the data.</div>
+    </div>
+    <div class="callout"><b>Some variables should not be adjusted for.</b> Values that arise <i>as a result of</i> viewing pages, such as product-page duration or PageValues, remove part of the real relationship when adjusted for (over-control). The new model therefore uses only context variables fixed before the session starts.</div>
+  </section>
+
+  <section id="model">
+    <div class="step">STEP 4 · Multiple logistic regression</div>
+    <h2>The relationship survives context adjustment, and a curve fits better</h2>
+    <p class="prose">We compared four logistic regressions predicting purchase (0/1). L2, which adds context (visitor type, traffic type, month, special day) and log-transforms page count, was the simplest model with the best scores. The log captures a relationship where the first few pages matter most and each additional page adds less.</p>
+    <div class="figure">
+      <div class="ftitle">Model comparison (5-fold cross-validation) <span class="chip src-r" style="margin-left:6px">Report</span></div>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Model</th><th>Specification</th><th class="r">AUC ↑</th><th class="r">Brier ↓</th><th class="r">Log loss ↓</th></tr></thead>
+        <tbody>
+          <tr><td>L0</td><td>Raw page count</td><td class="r">0.657</td><td class="r">0.1281</td><td class="r">0.4207</td></tr>
+          <tr><td>L1</td><td>Raw page count + context</td><td class="r">0.707</td><td class="r">0.1217</td><td class="r">0.3958</td></tr>
+          <tr class="hl"><td><b>L2</b></td><td><b>log(1 + page count) + context</b></td><td class="r">0.728</td><td class="r">0.1194</td><td class="r">0.3858</td></tr>
+          <tr><td>L3</td><td>L2 + visitor-type interaction</td><td class="r">0.727</td><td class="r">0.1195</td><td class="r">0.3860</td></tr>
+        </tbody></table></div>
+      <div class="fnote">AUC: how well the model separates buyers from non-buyers (0.5 = guessing). Brier and log loss: error of the predicted probabilities (lower is better).</div>
+    </div>
+    <div class="figure">
+      <div class="ftitle">Predicted purchase probability from L2 <span class="chip src-r" style="margin-left:6px">Report model</span></div>
+      <div class="legend"><span><i class="sw" style="background:var(--new)"></i>New visitors</span><span><i class="sw" style="background:var(--ret)"></i>Returning visitors</span></div>
+      <button type="button" class="replay" id="replay-curve" hidden>Replay 10 → 20 pages</button>
+      <svg class="chart" id="c-curve" viewBox="0 0 640 300" role="img" aria-label="L2 predicted curves: from 10 to 20 pages, new visitors 17.9% to 23.2%, returning 9.9% to 13.3%"></svg>
+      <div class="fnote">Predictions averaged over the same observed traffic, month and special-day mix for both groups. Only about 5% of new visitors exceed 50 pages, so that part of the curve has weak support.</div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="k">Odds ratio for returning visitors (L2)</div><div class="v">0.493</div><div class="fnote">95% CI 0.425–0.570. Under the same conditions, returning visitors have about half the purchase odds of new visitors.</div></div>
+      <div class="card"><div class="k">Slope difference by visitor type (L3)</div><div class="v">p = 0.576</div><div class="fnote">No evidence that the slopes differ. This does not prove they are equal.</div></div>
+    </div>
+  </section>
+
+  <section id="calc">
+    <div class="step">TRY IT · Purchase probability calculator</div>
+    <h2>Estimate the chance of a purchase</h2>
+    <p class="prose">Set a session's browsing depth and context to see the purchase probability predicted by our L2 logistic model. Settings left on “Average” are averaged over the mix observed in the data.</p>
+    <div class="figure">
+      <div class="calc-grid">
+        <form class="calc-controls" id="calc-form" onsubmit="return false">
+          <div><label for="calc-pages">Product pages viewed</label>
+            <div class="pages-row"><input type="range" id="calc-pages" min="0" max="200" step="1" value="10"><input type="number" id="calc-pages-n" min="0" max="500" step="1" value="10" aria-label="Product pages viewed"></div></div>
+          <div><span class="lbl" id="calc-v-lbl">Visitor type</span>
+            <div class="seg" role="radiogroup" aria-labelledby="calc-v-lbl"><input type="radio" name="calc-v" id="calc-v-new" value="0" checked><label for="calc-v-new">New</label><input type="radio" name="calc-v" id="calc-v-ret" value="1"><label for="calc-v-ret">Returning</label></div></div>
+          <div><label for="calc-month">Month</label><select id="calc-month"><option value="avg">Average of all months</option><option value="Feb">February</option><option value="Mar">March</option><option value="May">May</option><option value="June">June</option><option value="Jul">July</option><option value="Aug">August</option><option value="Sep">September</option><option value="Oct">October</option><option value="Nov">November</option><option value="Dec">December</option></select></div>
+          <div><label for="calc-traffic">Traffic source</label><select id="calc-traffic"><option value="avg">Average mix</option><option value="2">Type 2 · 31.9% of sessions</option><option value="1">Type 1 · 20.0% of sessions</option><option value="3">Type 3 · 16.7% of sessions</option><option value="4">Type 4 · 8.7% of sessions</option><option value="13">Type 13 · 6.0% of sessions</option><option value="10">Type 10 · 3.6% of sessions</option><option value="6">Type 6 · 3.6% of sessions</option><option value="8">Type 8 · 2.8% of sessions</option><option value="5">Type 5 · 2.1% of sessions</option><option value="11">Type 11 · 2.0% of sessions</option><option value="0">Other (pooled small types) · 1.4% of sessions</option><option value="20">Type 20 · 1.2% of sessions</option></select></div>
+          <div><label for="calc-sd">Closeness to a special day</label><select id="calc-sd"><option value="avg">Average mix</option><option value="0">Not near a special day (0)</option><option value="0.2">0.2</option><option value="0.4">0.4</option><option value="0.6">0.6</option><option value="0.8">0.8</option><option value="1">On the special day (1.0)</option></select></div>
+        </form>
+        <div class="calc-out" aria-live="polite">
+          <div class="ftitle" style="font-size:.85rem;color:var(--ink-2)">Predicted purchase probability</div>
+          <div class="calc-big" id="calc-p">–</div>
+          <div class="calc-rows">
+            <div><span>With 10 more pages</span><b id="calc-p10">–</b></div>
+            <div><span id="calc-other-lbl">Same session, returning visitor</span><b id="calc-other">–</b></div>
+            <div><span>Average session in the data</span><b>15.45%</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="ftitle" style="margin-top:6px">Predicted probability by product pages (selected settings)</div>
+      <svg class="chart" id="c-calc" viewBox="0 0 640 230" role="img" aria-label="Prediction curve for the selected settings"></svg>
+      <div class="fnote">A fitted association from model L2, not a causal effect: making someone view more pages may not change their chance of buying. With every setting on “Average”, results match the report's figures to within about 0.3 points.</div>
+    </div>
+  </section>
+
+  <section id="dml">
+    <div class="step">STEP 5 · Double Machine Learning</div>
+    <h2>The DML estimate depends heavily on what is adjusted for</h2>
+    <p class="prose">DML uses machine learning to remove what the adjustment variables (W) explain, then estimates the relationship (θ) between page count and purchase from what remains. With the same method, different choices of W gave anywhere from 0.45 to 1.29 points per 10 pages. Putting variables that result from viewing pages into W even flips the sign.</p>
+    <div class="figure">
+      <div class="ftitle">DML estimate by adjustment set (change in purchase probability per 10 pages)</div>
+      <svg class="chart" id="c-forest" viewBox="0 0 640 290" role="img" aria-label="Comparison of DML estimates across adjustment sets"></svg>
+      <div class="legend"><span><i class="sw" style="background:var(--accent)"></i>Report</span><span><i class="sw" style="background:transparent;border:2px solid var(--ink-2)"></i>Additional check</span><span><i class="sw" style="background:var(--warn)"></i>Over-control example</span></div>
+      <div class="fnote">Lines show nominal 95% intervals. The report gives no interval for the replacement W, so only the point is shown.</div>
+      <details><summary>Show as table</summary><div class="tablewrap"><table id="t-forest"></table></div></details>
+    </div>
+    <div class="callout"><b>W should not be chosen to make θ large or small.</b> Choose W before seeing results, by asking whether a variable is fixed before X and affects both X and Y. With W limited to pre-session variables, θ was 1.04 points per 10 pages and stayed positive in every combination.</div>
+  </section>
+
+  <section id="size">
+    <div class="step">STEP 6 · Reading the size</div>
+    <h2>0.45 points looks small, but its meaning depends on the baseline</h2>
+    <p class="prose">The average purchase rate is 15.45%. Comparing each change with this baseline shows its relative size. The full range matters: reporting only the largest values would be selective.</p>
+    <div class="figure">
+      <div class="ftitle">Relative increase over the baseline purchase rate</div>
+      <svg class="chart" id="c-rel" viewBox="0 0 640 250" role="img" aria-label="Relative increase over baseline by estimate, from 3% to 34%"></svg>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Estimate</th><th class="r">Change</th><th class="r">Baseline</th><th class="r">Relative</th></tr></thead>
+        <tbody>
+          <tr><td>DML, original W · +10 pages</td><td class="r">+0.45 pp</td><td class="r">15.45%</td><td class="r">+3%</td></tr>
+          <tr><td>DML, original W · +1 SD (≈45 pages)</td><td class="r">+2.0 pp</td><td class="r">15.45%</td><td class="r">+13%</td></tr>
+          <tr><td>DML, replacement W · +10 pages</td><td class="r">+1.12 pp</td><td class="r">15.45%</td><td class="r">+7%</td></tr>
+          <tr><td>L2, new visitors · 10 → 20 pages</td><td class="r">+5.23 pp</td><td class="r">17.94%</td><td class="r">+29%</td></tr>
+          <tr><td>L2, returning visitors · 10 → 20 pages</td><td class="r">+3.34 pp</td><td class="r">9.94%</td><td class="r">+34%</td></tr>
+        </tbody></table></div>
+      <div class="fnote">All are fitted associations. They do not show that raising page views would raise purchases by these amounts.</div>
+    </div>
+  </section>
+
+  <section id="next">
+    <div class="step">STEP 7 · Conclusion and next step</div>
+    <h2>What we can say, and what we cannot yet</h2>
+    <div class="grid2">
+      <div class="card"><div class="k yes">What the data show</div>
+        <p>New visitors purchase more often.</p>
+        <p>Sessions with more product pages are more likely to end in a purchase, with the steepest rise at low page counts.</p>
+        <p>The positive relationship remains after context adjustment.</p></div>
+      <div class="card"><div class="k no">What we cannot yet say</div>
+        <p>Whether raising page views would raise purchases.</p>
+        <p>How much prior purchase intent explains the relationship.</p>
+        <p>How much of it runs through time on page (mediation).</p></div>
+    </div>
+    <h3>Proposal: an A/B test of product recommendations</h3>
+    <ol class="steps">
+      <li>Randomly assign visitors to the current interface or one with relevant recommendations.</li>
+      <li>Balance new and returning visitors across both groups.</li>
+      <li>Make purchase conversion the primary outcome; record page count, checkout completion and time as secondary measures.</li>
+      <li>Set the minimum worthwhile gain and the sample size before running the test.</li>
+      <li>Report the effect of the feature, not a presumed effect of page count.</li>
+    </ol>
+    <p class="prose">Random assignment spreads unmeasured purchase intent evenly across the groups, so any difference between them can be attributed to the feature.</p>
+  </section>
+
+  <section id="resources">
+    <div class="step">RESOURCES</div>
+    <h2>Download the data and code</h2>
+    <p class="prose">Everything needed to check or rerun the analysis.</p>
+    <div class="dl-list"><a class="dl-item" href="data/online_shoppers_intention.csv" download><div><b>Raw data (CSV)</b><span>UCI Online Shoppers dataset, 12,330 sessions · CC BY 4.0</span></div><i>↓ CSV</i></a><a class="dl-item" href="code/logistic_models.py" download><div><b>Logistic regression code (Python)</b><span>Chi-square, page bands, models L0–L3 and predictions</span></div><i>↓ PY</i></a><a class="dl-item" href="code/dml_analysis.py" download><div><b>DML code (Python)</b><span>Double Machine Learning with different adjustment sets</span></div><i>↓ PY</i></a><a class="dl-item" href="docs/Project_Summary_Poster.pdf" download><div><b>Project summary poster (PDF)</b><span>One-page summary of the study</span></div><i>↓ PDF</i></a><a class="dl-item" href="docs/Effect_Size_Context.xlsx" download><div><b>Effect-size table (Excel)</b><span>Changes relative to the baseline purchase rate</span></div><i>↓ XLSX</i></a></div>
+    <p class="fnote" style="font-size:.85rem;color:var(--ink-3)">Run the code with Python 3: <code>python code/logistic_models.py data/online_shoppers_intention.csv</code></p>
+  </section>
+
+  <footer>
+    <p>Data: Sakar, C., & Kastro, Y. (2018). Online Shoppers Purchasing Intention Dataset. UCI Machine Learning Repository. <a href="https://doi.org/10.24432/C5F88Q">doi.org/10.24432/C5F88Q</a></p>
+    <p>85 sessions with visitor type "Other" were excluded. Report figures come from the Group 13 Week 5 revised check-in; "additional check" figures were recomputed from the same data (page-band purchase rates, monthly pattern, and DML with no adjustment, pre-session W and the over-control example). All intervals are nominal and do not account for unmeasured confounding.</p>
+    <p>Methods: <a href="https://docs.doubleml.org/stable/guide/models.html">DoubleML, "Models"</a> · <a href="https://www.statsmodels.org/stable/glm.html">statsmodels, "Generalized Linear Models"</a></p>
+  </footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+(function(){
+const NS="http://www.w3.org/2000/svg";
+const el=(t,a={},p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const txt=(p,x,y,s,a={})=>{const e=el("text",Object.assign({x,y},a),p);e.textContent=s;return e};
+const tip=document.getElementById("tip");
+function hover(node,html){
+  const show=e=>{tip.innerHTML=html;tip.hidden=false;const r=tip.getBoundingClientRect();
+    let x=(e.clientX||0)+14,y=(e.clientY||0)+14; if(x+r.width>innerWidth-8)x=innerWidth-r.width-8; if(y+r.height>innerHeight-8)y=(e.clientY||0)-r.height-10;
+    tip.style.left=x+"px";tip.style.top=y+"px"};
+  node.addEventListener("pointermove",show);node.addEventListener("pointerenter",show);
+  node.addEventListener("pointerleave",()=>tip.hidden=true);
+  node.setAttribute("tabindex","0");
+  node.addEventListener("focus",()=>{const b=node.getBoundingClientRect();show({clientX:b.right,clientY:b.top})});
+  node.addEventListener("blur",()=>tip.hidden=true);
+}
+const RM=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+function onView(node,fn){if(RM||!("IntersectionObserver" in window))return;const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();fn()}},{threshold:.35});io.observe(node)}
+const EASE="cubic-bezier(.2,.7,.2,1)";
+function animate(svg){
+  svg.querySelectorAll(".bar").forEach((b,i)=>b.animate([{transform:"scaleX(0)"},{transform:"scaleX(1)"}],{duration:750,delay:i*90,easing:EASE,fill:"backwards"}));
+  svg.querySelectorAll("polyline.draw").forEach((l,i)=>{const L=l.getTotalLength();l.animate([{strokeDasharray:L+" "+L,strokeDashoffset:L},{strokeDasharray:L+" "+L,strokeDashoffset:0}],{duration:1100,delay:i*150,easing:"ease-out",fill:"backwards"})});
+  svg.querySelectorAll(".pop").forEach((d,i)=>d.animate([{opacity:0},{opacity:1}],{duration:350,delay:450+i*35,easing:"ease-out",fill:"backwards"}));
+}
+["c-visitor","c-bands","c-month","c-forest","c-rel"].forEach(id=>{const n=document.getElementById(id);onView(n,()=>animate(n))});
+const lin=(d0,d1,r0,r1)=>v=>r0+(v-d0)/(d1-d0)*(r1-r0);
+function yAxis(s,x0,x1,y,ticks,fmt){const g=el("g",{},s);ticks.forEach(t=>{el("line",{x1:x0,x2:x1,y1:y(t),y2:y(t),stroke:"var(--grid)","stroke-width":1},g);txt(g,x0-8,y(t)+4,fmt(t),{"text-anchor":"end"})});return g}
+
+/* 1. visitor bars */
+(function(){
+  const s=document.getElementById("c-visitor");
+  const rows=[["New visitors",24.91,22.9,27.0,1694,"var(--new)"],["Returning",13.93,13.3,14.6,10551,"var(--ret)"]];
+  const x=lin(0,30,120,600);
+  [0,10,20,30].forEach(t=>{el("line",{x1:x(t),x2:x(t),y1:16,y2:150,stroke:"var(--grid)"},s);txt(s,x(t),166,t+"%",{"text-anchor":"middle"})});
+  rows.forEach((r,i)=>{const y=34+i*62;
+    txt(s,112,y+18,r[0],{"text-anchor":"end",class:"lbl","font-family":"var(--body)","font-size":"13"});
+    const b=el("path",{d:`M${x(0)},${y} H${x(r[1])-4} q4,0 4,4 V${y+28} q0,4 -4,4 H${x(0)} Z`,fill:r[5],class:"mark bar"},s);
+    el("line",{x1:x(r[2]),x2:x(r[3]),y1:y+16,y2:y+16,stroke:"var(--ink)","stroke-width":1.5,class:"pop"},s);
+    [r[2],r[3]].forEach(v=>el("line",{x1:x(v),x2:x(v),y1:y+11,y2:y+21,stroke:"var(--ink)","stroke-width":1.5,class:"pop"},s));
+    txt(s,x(r[3])+8,y+20,r[1].toFixed(2)+"%",{class:"strong"});
+    hover(b,`${r[0]}<br>Purchase rate ${r[1].toFixed(2)}%<br>95% CI ${r[2]}–${r[3]}%<br>${r[4].toLocaleString()} sessions`);
+  });
+})();
+
+/* 2. bands */
+(function(){
+  const B=[["0–10",[16.2,697,13.7,19.1],[5.0,3418,4.3,5.8]],["11–20",[26.8,489,23.1,30.9],[12.5,2058,11.1,14.0]],["21–40",[36.4,360,31.6,41.5],[17.1,2391,15.7,18.7]],["41–80",[31.7,123,24.1,40.4],[20.0,1622,18.1,22.0]],["81–160",[27.3,22,13.2,48.2],[26.7,812,23.8,29.9]],["161+",[66.7,3,20.8,93.9],[36.8,250,31.1,42.9]]];
+  const s=document.getElementById("c-bands");
+  const y=lin(0,100,260,16); const xs=i=>80+i*((600-80)/(B.length-1));
+  yAxis(s,56,620,y,[0,25,50,75,100],t=>t+"%");
+  B.forEach((b,i)=>txt(s,xs(i),282,b[0],{"text-anchor":"middle",class:"lbl"}));
+  txt(s,338,298,"Product pages per session",{"text-anchor":"middle"});
+  [[1,"var(--new)",-7,"New"],[2,"var(--ret)",7,"Returning"]].forEach(([k,c,off,name])=>{
+    const pts=B.map((b,i)=>[xs(i)+off,y(b[k][0])]);
+    el("polyline",{points:pts.map(p=>p.join(",")).join(" "),fill:"none",stroke:c,"stroke-width":2,"stroke-opacity":.55,class:"draw"},s);
+    B.forEach((b,i)=>{const v=b[k],faint=v[1]<30,cx=xs(i)+off;
+      el("line",{x1:cx,x2:cx,y1:y(v[2]),y2:y(v[3]),stroke:c,"stroke-width":1.5,"stroke-opacity":faint?.35:.9,class:"pop"},s);
+      const g=el("g",{class:"pop"},s);
+      el("circle",{cx,cy:y(v[0]),r:12,fill:"transparent"},g);
+      el("circle",{cx,cy:y(v[0]),r:5,fill:c,"fill-opacity":faint?.35:1,stroke:"var(--surface)","stroke-width":2,class:"mark"},g);
+      hover(g,`${name} · ${b[0]} pages<br>Purchase rate ${v[0]}%<br>95% CI ${v[2]}–${v[3]}%<br>${v[1].toLocaleString()} sessions${faint?"<br>Very small sample":""}`);
+    });
+  });
+  const t=document.getElementById("t-bands");
+  t.innerHTML="<thead><tr><th>Pages</th><th class='r'>New: rate</th><th class='r'>New: sessions</th><th class='r'>Returning: rate</th><th class='r'>Returning: sessions</th></tr></thead><tbody>"+B.map(b=>`<tr><td>${b[0]}</td><td class='r'>${b[1][0]}%</td><td class='r'>${b[1][1].toLocaleString()}</td><td class='r'>${b[2][0]}%</td><td class='r'>${b[2][1].toLocaleString()}</td></tr>`).join("")+"</tbody>";
+})();
+
+/* 3. months scatter */
+(function(){
+  const M=[["Feb",184,11.2,1.6],["Mar",1907,19.8,10.1],["May",3364,26.5,10.9],["Jun",287,35.4,10.1],["Jul",432,36.4,15.3],["Aug",433,38.3,17.6],["Sep",448,33.1,19.2],["Oct",549,33.6,20.9],["Nov",2976,46.3,25.4],["Dec",1665,28.7,12.2]];
+  const s=document.getElementById("c-month");
+  const x=lin(5,50,70,610), y=lin(0,30,256,16);
+  yAxis(s,56,620,y,[0,10,20,30],t=>t+"%");
+  [10,20,30,40,50].forEach(t=>txt(s,x(t),276,t,{"text-anchor":"middle"}));
+  txt(s,340,294,"Average product pages per session (month)",{"text-anchor":"middle"});
+  const rr=n=>4+Math.sqrt(n)/6;
+  const lab={"Nov":[10,4],"May":[-12,-10],"Mar":[-12,-10],"Feb":[10,4],"Dec":[10,4],"Oct":[-14,-12],"Sep":[-12,4],"Aug":[10,4],"Jul":[10,4],"Jun":[0,18]};
+  M.forEach(m=>{const g=el("g",{class:"pop"},s);const cx=x(m[2]),cy=y(m[3]);
+    el("circle",{cx,cy,r:Math.max(rr(m[1]),10),fill:"transparent"},g);
+    el("circle",{cx,cy,r:rr(m[1]),fill:"var(--accent)","fill-opacity":m[0]==="Nov"?.9:.45,stroke:"var(--surface)","stroke-width":2,class:"mark"},g);
+    const o=lab[m[0]];txt(s,cx+o[0],cy+o[1],m[0],{"text-anchor":o[0]<0?"end":"start",class:m[0]==="Nov"?"strong":"lbl"});
+    hover(g,`${m[0]}<br>Average ${m[2]} pages<br>Purchase rate ${m[3]}%<br>${m[1].toLocaleString()} sessions`);
+  });
+})();
+
+/* 4. L2 curve */
+(function(){
+  const C={new:[[0,6.08],[2,10.2],[5,13.89],[10,17.94],[15,20.85],[20,23.16],[25,25.09],[30,26.76],[40,29.53],[50,31.8],[60,33.73],[80,36.88]],
+           ret:[[0,3.12],[2,5.37],[5,7.5],[10,9.94],[15,11.78],[20,13.29],[25,14.57],[30,15.71],[40,17.65],[50,19.29],[60,20.72],[80,23.12]]};
+  const s=document.getElementById("c-curve");
+  const x=lin(0,80,60,560), y=lin(0,40,260,16);
+  el("rect",{x:x(50),y:16,width:x(80)-x(50),height:244,fill:"var(--grid)","fill-opacity":.6},s);
+  txt(s,x(65),32,"Few new visitors",{"text-anchor":"middle"});
+  yAxis(s,56,560,y,[0,10,20,30,40],t=>t+"%");
+  [0,10,20,30,40,50,60,70,80].forEach(t=>txt(s,x(t),280,t,{"text-anchor":"middle"}));
+  txt(s,310,298,"Product pages",{"text-anchor":"middle"});
+  [[10,"10"],[20,"20"]].forEach(([v])=>el("line",{x1:x(v),x2:x(v),y1:16,y2:260,stroke:"var(--ink-3)","stroke-dasharray":"3 4"},s));
+  [["new","var(--new)","New"],["ret","var(--ret)","Returning"]].forEach(([k,c,name])=>{
+    el("polyline",{points:C[k].map(p=>x(p[0])+","+y(p[1])).join(" "),fill:"none",stroke:c,"stroke-width":2.25,class:"draw"},s);
+    const last=C[k][C[k].length-1];txt(s,x(last[0])+8,y(last[1])+4,name,{class:"lbl"});
+    C[k].forEach(p=>{if(p[0]!==10&&p[0]!==20)return;const g=el("g",{},s);
+      el("circle",{cx:x(p[0]),cy:y(p[1]),r:12,fill:"transparent"},g);
+      el("circle",{cx:x(p[0]),cy:y(p[1]),r:5,fill:c,stroke:"var(--surface)","stroke-width":2},g);
+      if(k==="new"){txt(s,x(p[0])-8,y(p[1])-8,p[1].toFixed(1)+"%",{"text-anchor":"end",class:"strong"})}else{txt(s,x(p[0])+8,y(p[1])+18,p[1].toFixed(1)+"%",{class:"strong"})}
+      hover(g,`${name} · ${p[0]} pages<br>Predicted purchase probability ${p[1]}%`);});
+  });
+  txt(s,x(26),y(3),"10 → 20 pages: new +5.23 pp, returning +3.34 pp",{class:"lbl"});
+  let running=false;
+  function interp(pts,xv){for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];if(xv<=b[0])return a[1]+(b[1]-a[1])*(xv-a[0])/(b[0]-a[0])}return pts[pts.length-1][1]}
+  function sweep(){
+    if(running)return;running=true;
+    const g=el("g",{"pointer-events":"none"},s);
+    const items=[["new","var(--new)"],["ret","var(--ret)"]].map(([k,c])=>({k,pts:C[k].filter(p=>p[0]>=10&&p[0]<=20),
+      ring:el("circle",{r:10,fill:"var(--surface)","fill-opacity":.6,stroke:c,"stroke-width":2},g),
+      dot:el("circle",{r:5,fill:c},g),
+      t:txt(g,0,0,"",{class:"strong"})}));
+    const D=1800,t0=performance.now();
+    function frame(now){
+      const u=Math.min(1,(now-t0)/D),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,xv=10+10*e;
+      items.forEach(it=>{const pv=interp(it.pts,xv),cx=x(xv),cy=y(pv);
+        ["ring","dot"].forEach(n=>{it[n].setAttribute("cx",cx);it[n].setAttribute("cy",cy)});
+        it.t.textContent=xv.toFixed(0)+" pages · "+pv.toFixed(1)+"%";
+        it.t.setAttribute("x",cx+14);it.t.setAttribute("y",it.k==="new"?cy-14:cy+26)});
+      if(u<1){requestAnimationFrame(frame)}else{setTimeout(()=>{const a=g.animate([{opacity:1},{opacity:0}],{duration:400,fill:"forwards"});a.onfinish=()=>{g.remove();running=false}},1400)}
+    }
+    requestAnimationFrame(frame);
+  }
+  const btn=document.getElementById("replay-curve");
+  if(!RM){btn.hidden=false;btn.addEventListener("click",()=>{animate(s);setTimeout(sweep,900)})}
+  onView(s,()=>{animate(s);setTimeout(sweep,1000)});
+})();
+
+/* 5. forest */
+(function(){
+  const F=[
+    ["No adjustment","Simple regression",1.288,1.091,1.486,"c"],
+    ["All pre-session W","Month, special day, weekend, traffic, region, browser, OS, visitor type",1.037,0.844,1.230,"c"],
+    ["Replacement W (report)","Visitor type, traffic type, month, special day",1.121,null,null,"r"],
+    ["Original W (report)","PageValues, Administrative, Informational",0.449,0.259,0.640,"r"],
+    ["Over-control example","Adds in-session duration, ExitRates and others",-0.685,-1.013,-0.356,"w"]];
+  const s=document.getElementById("c-forest");
+  const x=lin(-1.2,1.6,250,620);
+  [-1,-0.5,0,0.5,1,1.5].forEach(t=>{el("line",{x1:x(t),x2:x(t),y1:10,y2:258,stroke:t===0?"var(--ink-3)":"var(--grid)","stroke-width":t===0?1.25:1},s);txt(s,x(t),276,(t>0?"+":"")+t+" pp",{"text-anchor":"middle"})});
+  F.forEach((f,i)=>{const yy=34+i*50;
+    txt(s,0,yy-2,f[0],{class:"strong","font-family":"var(--body)","font-size":"13"});
+    const d=txt(s,0,yy+15,f[1].length>40?f[1].slice(0,39)+"…":f[1],{"font-size":"10.5"});
+    const col=f[5]==="w"?"var(--warn)":(f[5]==="r"?"var(--accent)":"var(--ink-2)");
+    if(f[3]!==null){el("line",{x1:x(f[3]),x2:x(f[4]),y1:yy+4,y2:yy+4,stroke:col,"stroke-width":2,class:"pop"},s)}
+    const g=el("g",{class:"pop"},s);
+    el("circle",{cx:x(f[2]),cy:yy+4,r:12,fill:"transparent"},g);
+    el("circle",{cx:x(f[2]),cy:yy+4,r:6,fill:f[5]==="c"?"var(--surface)":col,stroke:col,"stroke-width":2,class:"mark"},g);
+    txt(s,x(f[2])+(f[2]<0?-12:12),yy-6,(f[2]>0?"+":"")+f[2].toFixed(2),{"text-anchor":f[2]<0?"end":"start",class:"strong"});
+    hover(g,`${f[0]}<br>${f[1]}<br>Per 10 pages ${(f[2]>0?"+":"")+f[2].toFixed(3)} pp`+(f[3]!==null?`<br>95% CI ${f[3].toFixed(3)} to ${f[4].toFixed(3)}`:"<br>No interval reported"));
+  });
+  const t=document.getElementById("t-forest");
+  t.innerHTML="<thead><tr><th>Adjustment set</th><th>Variables</th><th class='r'>Per 10 pages</th><th class='r'>95% CI</th><th>Source</th></tr></thead><tbody>"+F.map(f=>`<tr><td>${f[0]}</td><td>${f[1]}</td><td class='r'>${(f[2]>0?"+":"")+f[2].toFixed(2)} pp</td><td class='r'>${f[3]===null?"—":f[3].toFixed(2)+" to "+f[4].toFixed(2)}</td><td>${f[5]==="r"?"Report":"Additional check"}</td></tr>`).join("")+"</tbody>";
+})();
+
+/* 6. relative bars */
+(function(){
+  const R=[["DML original W · +10 p",3],["DML replacement W · +10 p",7],["DML original W · +1 SD",13],["L2 new · 10 → 20 p",29],["L2 returning · 10 → 20 p",34]];
+  const s=document.getElementById("c-rel");
+  const x=lin(0,40,200,600);
+  [0,10,20,30,40].forEach(t=>{el("line",{x1:x(t),x2:x(t),y1:8,y2:226,stroke:"var(--grid)"},s);txt(s,x(t),244,"+"+t+"%",{"text-anchor":"middle"})});
+  R.forEach((r,i)=>{const yy=14+i*42;
+    txt(s,190,yy+18,r[0],{"text-anchor":"end",class:"lbl","font-family":"var(--body)","font-size":"12.5"});
+    const b=el("path",{d:`M${x(0)},${yy} H${x(r[1])-4} q4,0 4,4 V${yy+20} q0,4 -4,4 H${x(0)} Z`,fill:"var(--accent)","fill-opacity":i<3?.55:.9,class:"mark bar"},s);
+    txt(s,x(r[1])+8,yy+17,"+"+r[1]+"%",{class:"strong"});
+    hover(b,`${r[0]}<br>+${r[1]}% over baseline`);
+  });
+})();
+})();
+</script>
+<script>
+(function(){
+const P={"b0": -2.55961, "lx": 0.52291, "V": -0.70819, "SD": -1.11185, "TT": {"0": 0.0, "1": -0.35714, "2": 0.16886, "3": -0.49665, "4": 0.11046, "5": 0.30559, "6": -0.16779, "8": 0.50494, "10": 0.24241, "11": 0.14294, "13": -1.07838, "20": 0.63896}, "TTw": {"0": 0.0135, "1": 0.1996, "2": 0.3187, "3": 0.167, "4": 0.0873, "5": 0.0212, "6": 0.0362, "8": 0.0279, "10": 0.0365, "11": 0.0201, "13": 0.0602, "20": 0.0119}, "M": {"Feb": -1.6153, "Mar": -0.42106, "May": -0.20205, "June": -0.50559, "Jul": -0.02965, "Aug": 0.0, "Sep": 0.09488, "Oct": 0.13439, "Nov": 0.32516, "Dec": -0.50052}, "Mw": {"Feb": 0.015, "Mar": 0.1557, "May": 0.2747, "June": 0.0234, "Jul": 0.0353, "Aug": 0.0354, "Sep": 0.0366, "Oct": 0.0448, "Nov": 0.243, "Dec": 0.136}, "SDw": {"0": 0.8978, "0.2": 0.0145, "0.4": 0.0198, "0.6": 0.0287, "0.8": 0.0265, "1": 0.0126}};
+const L={"new": "New", "ret": "Returning", "pts": "pts", "pages_u": "pages", "other_ret": "Same session, returning visitor", "other_new": "Same session, new visitor"};
+const NS="http://www.w3.org/2000/svg";
+const $=id=>document.getElementById(id);
+const sig=e=>1/(1+Math.exp(-e));
+function prob(x,v,mo,tt,sd){
+  const ms=mo==="avg"?Object.keys(P.M):[mo], ts=tt==="avg"?Object.keys(P.TT):[tt], ss=sd==="avg"?Object.keys(P.SDw):[sd];
+  let tot=0,wt=0;
+  for(const m of ms)for(const t of ts)for(const s of ss){
+    const w=(mo==="avg"?P.Mw[m]:1)*(tt==="avg"?P.TTw[t]:1)*(sd==="avg"?P.SDw[s]:1);
+    tot+=w*sig(P.b0+P.lx*Math.log1p(x)+P.V*v+P.TT[t]+P.M[m]+P.SD*parseFloat(s)); wt+=w;}
+  return tot/wt;
+}
+const pct=p=>(p*100).toFixed(1)+"%";
+const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+const tx=(p,x,y,s,a)=>{const e=el("text",Object.assign({x,y},a||{}),p);e.textContent=s;return e};
+function draw(x,v,mo,tt,sd){
+  const s=$("c-calc"); while(s.firstChild)s.removeChild(s.firstChild);
+  const XM=150, xs=[]; for(let i=0;i<=XM;i+=2)xs.push(i);
+  const cur=[0,1].map(vv=>xs.map(xx=>prob(xx,vv,mo,tt,sd)));
+  const top=Math.max(30,Math.ceil((Math.max(...cur[0],...cur[1])*100+4)/10)*10);
+  const X=a=>56+a/XM*560, Y=p=>196-p*100/top*180;
+  for(let g=0;g<=top;g+=10){el("line",{x1:56,x2:616,y1:Y(g/100),y2:Y(g/100),stroke:"var(--grid)"},s);tx(s,48,Y(g/100)+4,g+"%",{"text-anchor":"end"})}
+  [0,25,50,75,100,125,150].forEach(t=>tx(s,X(t),214,t,{"text-anchor":"middle"}));
+  tx(s,336,229,L.pages_u,{"text-anchor":"middle"});
+  [0,1].forEach(vv=>{const c=vv?"var(--ret)":"var(--new)",sel=vv===v;
+    el("polyline",{points:xs.map((xx,i)=>X(xx)+","+Y(cur[vv][i])).join(" "),fill:"none",stroke:c,"stroke-width":sel?2.5:1.5,"stroke-opacity":sel?1:.45,"stroke-dasharray":sel?"":"5 4"},s);
+    const lp=cur[vv][cur[vv].length-1]; tx(s,X(XM)-4,Y(lp)+(vv?14:-8),vv?L.ret:L.new,{"text-anchor":"end",class:"lbl"});});
+  const xc=Math.min(x,XM), pc=prob(xc,v,mo,tt,sd), c=v?"var(--ret)":"var(--new)";
+  el("line",{x1:X(xc),x2:X(xc),y1:16,y2:196,stroke:"var(--ink-3)","stroke-dasharray":"3 4"},s);
+  el("circle",{cx:X(xc),cy:Y(pc),r:6.5,fill:c,stroke:"var(--surface)","stroke-width":2.5},s);
+  const right=X(xc)>480; tx(s,X(xc)+(right?-10:10),Y(pc)-10,(x>XM?"150+ · ":"")+pct(prob(x,v,mo,tt,sd)),{"text-anchor":right?"end":"start",class:"strong"});
+}
+function update(src){
+  let x=src==="n"?parseInt($("calc-pages-n").value,10):parseInt($("calc-pages").value,10);
+  if(!isFinite(x)||x<0)x=0; if(x>500)x=500;
+  if(src==="n"){$("calc-pages").value=Math.min(x,200)}else{$("calc-pages-n").value=x}
+  const v=document.querySelector('input[name="calc-v"]:checked').value==="1"?1:0;
+  const mo=$("calc-month").value, tt=$("calc-traffic").value, sd=$("calc-sd").value;
+  const p=prob(x,v,mo,tt,sd), p10=prob(x+10,v,mo,tt,sd), po=prob(x,1-v,mo,tt,sd);
+  $("calc-p").textContent=pct(p);
+  $("calc-p10").textContent=pct(p10)+"  (+"+((p10-p)*100).toFixed(1)+" "+L.pts+")";
+  $("calc-other-lbl").textContent=v?L.other_new:L.other_ret;
+  $("calc-other").textContent=pct(po);
+  draw(x,v,mo,tt,sd);
+}
+$("calc-pages").addEventListener("input",()=>update("r"));
+$("calc-pages-n").addEventListener("input",()=>update("n"));
+["calc-month","calc-traffic","calc-sd"].forEach(id=>$(id).addEventListener("change",()=>update("r")));
+document.querySelectorAll('input[name="calc-v"]').forEach(r=>r.addEventListener("change",()=>update("r")));
+update("r");
+})();
+</script>
+</body></html>
